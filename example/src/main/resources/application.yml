@@ -1,0 +1,21 @@
+
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /swagger-resources/api-docs
+
+feign:
+  hystrixConfig:
+    "hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds": 5000
+    "hystrix.command.GithubConnector#getRepos.execution.isolation.thread.timeoutInMilliseconds": 10000
+  endpointConfig:
+    GithubConnector:
+      default:
+        url: https://api.github.com
+        readTimeoutMillis: 5000
+        connectTimeoutMillis: 5000
+      getRepos:
+        url: https://api.github.com
+        readTimeoutMillis: 10000
+        connectTimeoutMillis: 10000
