@@ -2,7 +2,7 @@ Feign集成工具
 ====
 
 ![](https://img.shields.io/badge/Java-1.8-orange.svg)
-![](https://img.shields.io/badge/Feign-9.7.0-green.svg)
+![](https://img.shields.io/badge/OpenFeign-9.7.0-green.svg)
 ![](https://img.shields.io/badge/Springboot-1.5+-green.svg)
 
 
@@ -139,3 +139,16 @@ public String getUserRepos(@PathVariable String username) {
 ```
 
 具体见[使用示例example](example)
+
+
+
+## 相比原生有什么区别？
+
+最大的区别是hystrix配置的内容，原生并没有提供hystrix相关配置，需要自己额外
+准备。这里集成hystrix的约定，只要按照hystrix官方参数配置即可。
+
+然后是缓存，在使用原生OpenFeign的过程中发现每次请求都要创建一个Connector,
+而且Connector的创建又依赖一大堆别的class。对于我们远程调用比较频繁的应用来说，
+增大了垃圾收集器的开销，我们其实不想回收。所以对Connector做了缓存。
+
+其他用法同OpenFeign。
