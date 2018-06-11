@@ -38,6 +38,7 @@ public class MyJacksonEncoder implements Encoder {
         try {
             JavaType javaType = this.mapper.getTypeFactory().constructType(bodyType);
             String bodyText = this.mapper.writerFor(javaType).writeValueAsString(object);
+            System.out.println(bodyText);
             template.body(bodyText);
         } catch (JsonProcessingException var5) {
             throw new EncodeException(var5.getMessage(), var5);

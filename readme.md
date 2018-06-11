@@ -1,0 +1,141 @@
+Feign集成工具
+====
+
+![](https://img.shields.io/badge/Java-1.8-orange.svg)
+![](https://img.shields.io/badge/Feign-9.7.0-green.svg)
+![](https://img.shields.io/badge/Springboot-1.5+-green.svg)
+
+
+如果不使用SpringCloud，单独使用OpenFeign怎么用？
+
+本项目提供了一个开箱即用的spring boot feign starter, 基于默认的约定配置
+来简化和优化OpenFeign的使用流程.
+
+
+
+## How to use
+
+引入repo
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
+
+引入依赖
+```xml
+<dependency>
+    <groupId>com.github.Ryan-Miao</groupId>
+    <artifactId>springboot-starter-feign</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
+
+在springboot 项目中添加Configuration
+
+```java
+@Autowired
+private Environment environment;
+
+@Bean
+public FeignFactory feignFactory() {
+    return new FeignFactory(environment, hystrixConfigurationProperties());
+}
+
+@Bean
+public HystrixConfigurationProperties hystrixConfigurationProperties() {
+    return new HystrixConfigurationProperties();
+}
+```
+
+
+然后就可以使用了。
+
+
+
+### 使用和配置
+约定了一些配置，大概如下
+
+```yml
+feign:
+  hystrixConfig:
+    "hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds": 8000
+    "hystrix.command.GithubConnector#getRepos.execution.isolation.thread.timeoutInMilliseconds": 15000
+  endpointConfig:
+    GithubConnector:
+      default:
+        url: https://api.github.com
+        readTimeoutMillis: 8000
+        connectTimeoutMillis: 5000
+      getRepos:
+        url: https://api.github.com
+        readTimeoutMillis: 15000
+        connectTimeoutMillis: 10000
+```
+
+- feign是配置的第一个索引
+- hystrixConfig是hystrix的配置，更多配置见[Hystrix](https://github.com/Netflix/Hystrix/)
+- endpointConfig是我们远程请求的host和超时配置，其中，第一个节点为Connector class
+的名称，下一个是具体到某个请求的key，整个Connector class的默认配置是default
+节点，如果该Connector里的某个请求的超时比较长，需要单独设置，则会覆盖默认节点。
+另外，hystrix的超时配置commankey为[connectorClassName][#][methodName]
+
+
+
+定义一个GithubConnector，继承`com.miao.connect.Connector`
+
+```java
+public interface GithubConnector extends Connector {
+
+    @RequestLine("GET /users/{username}")
+    @Headers({"Content-Type: application/json"})
+    GithubUser getGithubUser(@Param("username") String username);
+
+    @RequestLine("GET /users/{username}/repos")
+    @Headers({"Content-Type: application/json"})
+    Observable<String> getRepos(@Param("username") String username);
+}
+```
+
+
+调用
+
+```java
+@Autowired
+private FeignFactory feignFactory;
+
+
+@GetMapping("/profile/{username}")
+public GithubUser getProfile(@PathVariable String username) {
+    //采用Jackson作为编码和解码类库，url和超时配置按照default，即读取feign.endpointConfig.GithubConnector.default
+    final GithubConnector connector = feignFactory.builder().getConnector(GithubConnector.class);
+    return connector.getGithubUser(username);
+}
+
+@GetMapping("/repos/{username}")
+public String getUserRepos(@PathVariable String username) {
+    //用String来接收返回值， url和超时单独指定配置，因为请求时间较长
+    //采用connector的method来当做获取配置的key，即读取feign.endpointConfig.GithubConnector.getRepos
+    final GithubConnector connector = feignFactory.builder()
+        .connectorMethod("getRepos")
+        .stringDecoder()  //默认使用jackson作为序列化工具，这里接收string，使用StringDecoder
+        .getConnector(GithubConnector.class);
+    return connector.getRepos(username)
+        .onErrorReturn(e -> {
+            LOGGER.error("请求出错", e);
+            Throwable cause = e.getCause();
+            if (cause instanceof FeignErrorException) {
+                throw (FeignErrorException) cause;
+            }
+            throw new RuntimeException("请求失败", e);
+        }).toBlocking().first();
+}
+```
+
+具体见[使用示例example](example)

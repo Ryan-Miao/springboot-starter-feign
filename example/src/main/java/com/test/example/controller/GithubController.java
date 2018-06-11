@@ -29,17 +29,19 @@ public class GithubController {
 
     @GetMapping("/profile/{username}")
     public GithubUser getProfile(@PathVariable String username) {
-        //采用Jackson作为编码和解码类库，url和超时配置按照default
-        final GithubConnector connector = feignFactory
-            .getConnectorWithJackson(GithubConnector.class);
+        //采用Jackson作为编码和解码类库，url和超时配置按照default，即读取feign.endpointConfig.GithubConnector.default
+        final GithubConnector connector = feignFactory.builder().getConnector(GithubConnector.class);
         return connector.getGithubUser(username);
     }
 
     @GetMapping("/repos/{username}")
     public String getUserRepos(@PathVariable String username) {
         //用String来接收返回值， url和超时单独指定配置，因为请求时间较长
-        final GithubConnector connector = feignFactory
-            .getConnectorWithString(GithubConnector.class, () -> "getRepos");
+        //采用connector的method来当做获取配置的key，即读取feign.endpointConfig.GithubConnector.getRepos
+        final GithubConnector connector = feignFactory.builder()
+            .connectorMethod("getRepos")
+            .stringDecoder()  //默认使用jackson作为序列化工具，这里接收string，使用StringDecoder
+            .getConnector(GithubConnector.class);
         return connector.getRepos(username)
             .onErrorReturn(e -> {
                 LOGGER.error("请求出错", e);
