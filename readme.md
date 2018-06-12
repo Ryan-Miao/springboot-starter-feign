@@ -5,6 +5,8 @@ Feign集成工具
 [![](https://img.shields.io/badge/OpenFeign-9.7.0-green.svg)](https://github.com/OpenFeign/feign/tree/master/hystrix)
 ![](https://img.shields.io/badge/Springboot-1.5+-green.svg)
 
+[![Build Status](https://travis-ci.org/Ryan-Miao/springboot-starter-feign.svg?branch=master)](https://travis-ci.org/Ryan-Miao/springboot-starter-feign)
+
 
 如果不使用SpringCloud，单独使用OpenFeign怎么用？
 
