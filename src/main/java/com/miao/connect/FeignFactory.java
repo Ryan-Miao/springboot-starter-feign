@@ -30,18 +30,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.env.Environment;
 
 /**
+ * Feign的制造工厂，会用读取配置文件，生成对应的Connector.
+ *
  * @author Ryan
  */
 public class FeignFactory {
 
     private static final Map<String, Connector> CONNECTORS = new ConcurrentHashMap<>();
-    private static final GsonEncoder gsonEncoder = new GsonEncoder();
-    private static final GsonDecoder gsonDecoder = new GsonDecoder();
-    private static final MyJacksonDecoder jacksonDecoder = new MyJacksonDecoder();
-    private static final MyJacksonEncoder jacksonEncoder = new MyJacksonEncoder();
-    private static final StringDecoder stringDecoder = new StringDecoder();
+    private static final GsonEncoder GSON_ENCODER = new GsonEncoder();
+    private static final GsonDecoder GSON_DECODER = new GsonDecoder();
+    private static final MyJacksonDecoder JACKSON_DECODER = new MyJacksonDecoder();
+    private static final MyJacksonEncoder JACKSON_ENCODER = new MyJacksonEncoder();
+    private static final StringDecoder STRING_DECODER = new StringDecoder();
 
-    private static Default noSslVerifyClient = new Default(null, (s, sslSession) -> true);
+    private static Default noSslVerifyClient = new Default(null, (ssl, sslSession) -> true);
 
     private final Environment environment;
     private final HystrixConfigurationProperties hystrixConfigurationProperties;
@@ -54,6 +56,9 @@ public class FeignFactory {
 
     private Map<String, Object> hystrixConf = new HashMap<>();
 
+    /**
+     * 初始化hystrix配置，读取环境变量.
+     */
     @PostConstruct
     public void initHystrixConfiguration() {
         read(null, hystrixConfigurationProperties.getHystrixConfig());
@@ -85,12 +90,15 @@ public class FeignFactory {
 
         private final Environment environment;
 
-        public Builder(Environment environment) {
+        /**
+         * 创建builder.
+         */
+        Builder(Environment environment) {
             this.environment = environment;
         }
 
         /**
-         * Connector的方法名
+         * Connector的方法名.
          */
         private String connectorMethod = "default";
         private List<RequestInterceptor> requestInterceptors = new ArrayList<>();
@@ -104,8 +112,8 @@ public class FeignFactory {
                 .andCommandKey(HystrixCommandKey.Factory.asKey(hystrixCommandKey))
                 ;
         };
-        private Encoder encoder = jacksonEncoder;
-        private Decoder decoder = jacksonDecoder;
+        private Encoder encoder = JACKSON_ENCODER;
+        private Decoder decoder = JACKSON_DECODER;
         private Retryer retryer = Retryer.NEVER_RETRY;
         private Level logLevel = Level.NONE;
         private ErrorDecoder errorDecoder = new FeignErrorDecoder();
@@ -119,12 +127,12 @@ public class FeignFactory {
         }
 
         public Builder gsonEncoder() {
-            this.encoder = gsonEncoder;
+            this.encoder = GSON_ENCODER;
             return this;
         }
 
         public Builder jacksonEncoder() {
-            this.encoder = jacksonEncoder;
+            this.encoder = JACKSON_ENCODER;
             return this;
         }
 
@@ -134,17 +142,17 @@ public class FeignFactory {
         }
 
         public Builder gsonDecoder() {
-            this.decoder = gsonDecoder;
+            this.decoder = GSON_DECODER;
             return this;
         }
 
         public Builder jacksonDecoder() {
-            this.decoder = jacksonDecoder;
+            this.decoder = JACKSON_DECODER;
             return this;
         }
 
         public Builder stringDecoder() {
-            this.decoder = stringDecoder;
+            this.decoder = STRING_DECODER;
             return this;
         }
 
@@ -189,10 +197,14 @@ public class FeignFactory {
         }
 
 
+        /**
+         * 转换是安全的，获取最终的Connector. 会根据connectClass + connectorMethodName来缓存生成的Connector，减少对象创建.
+         */
         @SuppressWarnings("unchecked")
         public <T extends Connector> T getConnector(Class<T> connectorClass) {
             //determine configuration key
-            final String commandConfigKey = connectorClass.getSimpleName() + "." + this.connectorMethod;
+            final String commandConfigKey =
+                connectorClass.getSimpleName() + "." + this.connectorMethod;
 
             return (T) CONNECTORS.computeIfAbsent(commandConfigKey, k -> {
                 this.determineFeignConfiguration(commandConfigKey);

@@ -28,6 +28,14 @@
     </repository>
   </repositories>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>central</id>
+      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+      <name>aliyun</name>
+    </pluginRepository>
+  </pluginRepositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -140,22 +148,59 @@
 
 
   <build>
+
+    <pluginManagement>
+      <plugins>
+
+        <!--compiler在maven声明周期内置，所以后面不用声明也可使用-->
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.5.1</version>
+          <configuration>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+            <encoding>UTF-8</encoding>
+          </configuration>
+        </plugin>
+
+
+        <!--公共checkstyle标准配置，可以在子模块中覆盖，修改自定义选项-->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.0.0</version>
+          <configuration>
+            <configLocation>config/checkstyle/google-checks-6.18.xml</configLocation>
+            <consoleOutput>true</consoleOutput>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failsOnError>true</failsOnError>
+            <linkXRef>false</linkXRef>
+            <skip>false</skip>
+            <violationSeverity>error</violationSeverity>
+          </configuration>
+          <executions>
+            <execution>
+              <id>install</id>
+              <phase>install</phase>
+              <goals>
+                <goal>checkstyle</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+
+    <!--所有子模块都要执行的plugin-->
     <plugins>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <encoding>UTF-8</encoding>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.0</version>
+        <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
     </plugins>
+
   </build>
 
 </project>

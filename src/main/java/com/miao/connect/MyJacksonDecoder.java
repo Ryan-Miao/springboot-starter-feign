@@ -16,6 +16,11 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Collections;
 
+/**
+ * Jackson自定义，用来支持LocalDate.
+ *
+ * @author Ryan
+ */
 public class MyJacksonDecoder implements Decoder {
 
     private final ObjectMapper mapper;
@@ -24,6 +29,9 @@ public class MyJacksonDecoder implements Decoder {
         this(Collections.emptyList());
     }
 
+    /**
+     * 构造器.
+     */
     public MyJacksonDecoder(Iterable<Module> modules) {
         this.mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());

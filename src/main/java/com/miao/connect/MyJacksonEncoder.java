@@ -13,6 +13,10 @@ import feign.codec.Encoder;
 import java.lang.reflect.Type;
 import java.util.Collections;
 
+/**
+ * 自定义Jackson编码，用于请求体序列化，这里主要为了支持LocalDate.
+ * @author Ryan
+ */
 public class MyJacksonEncoder implements Encoder {
 
     private final ObjectMapper mapper;
@@ -21,6 +25,9 @@ public class MyJacksonEncoder implements Encoder {
         this(Collections.emptyList());
     }
 
+    /**
+     * 构造器.
+     */
     public MyJacksonEncoder(Iterable<Module> modules) {
         this.mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
