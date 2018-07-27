@@ -36,6 +36,7 @@ import org.springframework.core.env.Environment;
  */
 public class FeignFactory {
 
+    private String a;
     private static final Map<String, Connector> CONNECTORS = new ConcurrentHashMap<>();
     private static final GsonEncoder GSON_ENCODER = new GsonEncoder();
     private static final GsonDecoder GSON_DECODER = new GsonDecoder();
