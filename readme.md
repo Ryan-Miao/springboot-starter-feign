@@ -39,22 +39,6 @@ Feign集成工具
 ```
 
 
-在springboot 项目中添加Configuration
-
-```java
-@Autowired
-private Environment environment;
-
-@Bean
-public FeignFactory feignFactory() {
-    return new FeignFactory(environment, hystrixConfigurationProperties());
-}
-
-@Bean
-public HystrixConfigurationProperties hystrixConfigurationProperties() {
-    return new HystrixConfigurationProperties();
-}
-```
 
 
 然后就可以使用了。
